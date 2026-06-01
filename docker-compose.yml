@@ -24,6 +24,17 @@ services:
       SPRING_DATASOURCE_PASSWORD: admin123
     ports:
       - "8080:8080"
+  
+  frontend:
+    build: ./frontend
+    container_name: task-manager-web
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8080/api/tasks
+    ports:
+      - "5173:5173"
 
 volumes:
   task_manager_data:
