@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.projectsia.taskmanager.task.TaskNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -31,11 +32,11 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
-
-    @ExceptionHandler(RuntimeException.class)
+    
+    @ExceptionHandler(TaskNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiError handleRuntimeException(
-            RuntimeException ex,
+    public ApiError handleTaskNotFoundException(
+            TaskNotFoundException ex,
             HttpServletRequest request
     ) {
         return new ApiError(

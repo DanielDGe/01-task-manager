@@ -18,8 +18,8 @@ public class TaskService {
     }
 
     public Task findById(Long id) {
-        return taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+    return taskRepository.findById(id)
+            .orElseThrow(() -> new TaskNotFoundException(id));
     }
 
     public Task create(TaskRequest request) {
