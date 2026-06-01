@@ -12,5 +12,18 @@ services:
     volumes:
       - task_manager_data:/var/lib/postgresql/data
 
+  backend:
+    build: ./backend
+    container_name: task-manager-api
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/task_manager
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+    ports:
+      - "8080:8080"
+
 volumes:
   task_manager_data:
