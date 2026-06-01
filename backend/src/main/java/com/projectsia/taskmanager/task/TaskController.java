@@ -8,36 +8,34 @@ import java.util.List;
 @RequestMapping("/api/tasks")
 public class TaskController {
 
-    private final TaskRepository taskRepository;
+    private final TaskService taskService;
 
-    public TaskController(TaskRepository taskRepository) {
-        this.taskRepository = taskRepository;
+    public TaskController(TaskService taskService) {
+        this.taskService = taskService;
     }
 
     @GetMapping
     public List<Task> findAll() {
-        return taskRepository.findAll();
+        return taskService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public Task findById(@PathVariable Long id) {
+        return taskService.findById(id);
     }
 
     @PostMapping
     public Task create(@RequestBody Task task) {
-        return taskRepository.save(task);
+        return taskService.create(task);
     }
 
     @PutMapping("/{id}")
     public Task update(@PathVariable Long id, @RequestBody Task task) {
-        Task existingTask = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
-
-        existingTask.setTitle(task.getTitle());
-        existingTask.setDescription(task.getDescription());
-        existingTask.setCompleted(task.isCompleted());
-
-        return taskRepository.save(existingTask);
+        return taskService.update(id, task);
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        taskRepository.deleteById(id);
+        taskService.delete(id);
     }
 }
