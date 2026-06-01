@@ -18,20 +18,20 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Task>> findAll() {
+    public ResponseEntity<List<TaskResponse>> findAll() {
         return ResponseEntity.ok(taskService.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> findById(@PathVariable Long id) {
+    public ResponseEntity<TaskResponse> findById(@PathVariable Long id) {
         return ResponseEntity.ok(taskService.findById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Task> create(@Valid @RequestBody TaskRequest request) {
-        Task createdTask = taskService.create(request);
+    public ResponseEntity<TaskResponse> create(@Valid @RequestBody TaskRequest request) {
 
-        URI location = URI.create("/api/tasks/" + createdTask.getId());
+        TaskResponse createdTask = taskService.create(request);
+        URI location = URI.create("/api/tasks/" + createdTask.id());
 
         return ResponseEntity
                 .created(location)
@@ -39,7 +39,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> update(
+    public ResponseEntity<TaskResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody TaskRequest request
     ) {
