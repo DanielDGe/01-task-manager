@@ -1,8 +1,10 @@
 package com.projectsia.taskmanager.task;
 
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -16,27 +18,37 @@ public class TaskController {
     }
 
     @GetMapping
-    public List<Task> findAll() {
-        return taskService.findAll();
+    public ResponseEntity<List<Task>> findAll() {
+        return ResponseEntity.ok(taskService.findAll());
     }
 
     @GetMapping("/{id}")
-    public Task findById(@PathVariable Long id) {
-        return taskService.findById(id);
+    public ResponseEntity<Task> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(taskService.findById(id));
     }
 
     @PostMapping
-    public Task create(@Valid @RequestBody TaskRequest request) {
-        return taskService.create(request);
+    public ResponseEntity<Task> create(@Valid @RequestBody TaskRequest request) {
+        Task createdTask = taskService.create(request);
+
+        URI location = URI.create("/api/tasks/" + createdTask.getId());
+
+        return ResponseEntity
+                .created(location)
+                .body(createdTask);
     }
 
     @PutMapping("/{id}")
-    public Task update(@PathVariable Long id, @Valid @RequestBody TaskRequest request) {
-        return taskService.update(id, request);
+    public ResponseEntity<Task> update(
+            @PathVariable Long id,
+            @Valid @RequestBody TaskRequest request
+    ) {
+        return ResponseEntity.ok(taskService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         taskService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
