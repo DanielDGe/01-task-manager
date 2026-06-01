@@ -22,16 +22,21 @@ public class TaskService {
                 .orElseThrow(() -> new RuntimeException("Task not found"));
     }
 
-    public Task create(Task task) {
+    public Task create(TaskRequest request) {
+        Task task = new Task();
+        task.setTitle(request.title());
+        task.setDescription(request.description());
+        task.setCompleted(request.completed());
+
         return taskRepository.save(task);
     }
 
-    public Task update(Long id, Task task) {
+    public Task update(Long id, TaskRequest request) {
         Task existingTask = findById(id);
 
-        existingTask.setTitle(task.getTitle());
-        existingTask.setDescription(task.getDescription());
-        existingTask.setCompleted(task.isCompleted());
+        existingTask.setTitle(request.title());
+        existingTask.setDescription(request.description());
+        existingTask.setCompleted(request.completed());
 
         return taskRepository.save(existingTask);
     }

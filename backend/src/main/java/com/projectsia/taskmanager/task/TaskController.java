@@ -1,5 +1,6 @@
 package com.projectsia.taskmanager.task;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,13 +26,13 @@ public class TaskController {
     }
 
     @PostMapping
-    public Task create(@RequestBody Task task) {
-        return taskService.create(task);
+    public Task create(@Valid @RequestBody TaskRequest request) {
+        return taskService.create(request);
     }
 
     @PutMapping("/{id}")
-    public Task update(@PathVariable Long id, @RequestBody Task task) {
-        return taskService.update(id, task);
+    public Task update(@PathVariable Long id, @Valid @RequestBody TaskRequest request) {
+        return taskService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
