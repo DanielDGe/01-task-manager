@@ -6,6 +6,8 @@ const API_URL = 'http://localhost:8080/api/tasks';
 function App() {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   const loadTasks = async () => {
     const response = await fetch(API_URL);
@@ -32,14 +34,6 @@ function App() {
     loadTasks();
   };
 
-  const deleteTask = async (id) => {
-    await fetch(`${API_URL}/${id}`, {
-      method: 'DELETE'
-    });
-
-    loadTasks();
-  };
-
   const toggleTask = async (task) => {
     await fetch(`${API_URL}/${task.id}`, {
       method: 'PUT',
@@ -49,6 +43,41 @@ function App() {
         description: task.description,
         completed: !task.completed
       })
+    });
+
+    loadTasks();
+  };
+
+  const startEditing = (task) => {
+    setEditingId(task.id);
+    setEditingTitle(task.title);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditingTitle('');
+  };
+
+  const saveEditing = async (task) => {
+    if (!editingTitle.trim()) return;
+
+    await fetch(`${API_URL}/${task.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: editingTitle,
+        description: task.description,
+        completed: task.completed
+      })
+    });
+
+    cancelEditing();
+    loadTasks();
+  };
+
+  const deleteTask = async (id) => {
+    await fetch(`${API_URL}/${id}`, {
+      method: 'DELETE'
     });
 
     loadTasks();
@@ -80,11 +109,24 @@ function App() {
               onChange={() => toggleTask(task)}
             />
 
-            <span style={{ textDecoration: task.completed ? 'line-through' : 'none' }}>
-              {task.title}
-            </span>
-
-            <button onClick={() => deleteTask(task.id)}>Delete</button>
+            {editingId === task.id ? (
+              <>
+                <input
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                />
+                <button onClick={() => saveEditing(task)}>Save</button>
+                <button onClick={cancelEditing}>Cancel</button>
+              </>
+            ) : (
+              <>
+                <span style={{ textDecoration: task.completed ? 'line-through' : 'none' }}>
+                  {task.title}
+                </span>
+                <button onClick={() => startEditing(task)}>Edit</button>
+                <button onClick={() => deleteTask(task.id)}>Delete</button>
+              </>
+            )}
           </li>
         ))}
       </ul>
