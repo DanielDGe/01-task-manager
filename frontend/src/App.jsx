@@ -15,36 +15,52 @@ function App() {
   const [totalPages, setTotalPages] = useState(0);
   const [last, setLast] = useState(true);
   const pageSize = 2;
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const loadTasks = async (
     selectedFilter = filter,
     selectedSearch = search,
     selectedPage = page
   ) => {
-    const params = new URLSearchParams();
+    try {
+      setLoading(true);
+      setError('');
 
-    params.append('page', selectedPage);
-    params.append('size', pageSize);
+      const params = new URLSearchParams();
 
-    if (selectedFilter === 'completed') {
-      params.append('completed', 'true');
+      params.append('page', selectedPage);
+      params.append('size', pageSize);
+
+      if (selectedFilter === 'completed') {
+        params.append('completed', 'true');
+      }
+
+      if (selectedFilter === 'pending') {
+        params.append('completed', 'false');
+      }
+
+      if (selectedSearch.trim()) {
+        params.append('search', selectedSearch.trim());
+      }
+
+      const response = await fetch(`${PAGE_API_URL}?${params.toString()}`);
+
+      if (!response.ok) {
+        throw new Error('Error loading tasks');
+      }
+
+      const data = await response.json();
+
+      setTasks(data.content);
+      setPage(data.page);
+      setTotalPages(data.totalPages);
+      setLast(data.last);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
-
-    if (selectedFilter === 'pending') {
-      params.append('completed', 'false');
-    }
-
-    if (selectedSearch.trim()) {
-      params.append('search', selectedSearch.trim());
-    }
-
-    const response = await fetch(`${PAGE_API_URL}?${params.toString()}`);
-    const data = await response.json();
-
-    setTasks(data.content);
-    setPage(data.page);
-    setTotalPages(data.totalPages);
-    setLast(data.last);
   };
 
   const changeFilter = (selectedFilter) => {
@@ -176,6 +192,10 @@ function App() {
         <button onClick={() => changeFilter('completed')}>Completed</button>
       </div>
 
+      {loading && <p className="loading">Loading tasks...</p>}
+
+      {error && <p className="error">{error}</p>}
+      
       <ul>
         {tasks.map((task) => (
           <li key={task.id}>

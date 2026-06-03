@@ -115,3 +115,16 @@ li span {
   font-size: 14px;
   color: #374151;
 }
+
+.loading {
+  text-align: center;
+  color: #2563eb;
+  font-size: 14px;
+}
+
+.error {
+  text-align: center;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: bold;
+}
