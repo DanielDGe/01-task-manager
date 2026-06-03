@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/tasks';
+const PAGE_API_URL = `${API_URL}/page`;
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -10,9 +11,20 @@ function App() {
   const [editingTitle, setEditingTitle] = useState('');
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [last, setLast] = useState(true);
+  const pageSize = 2;
 
-  const loadTasks = async (selectedFilter = filter, selectedSearch = search) => {
+  const loadTasks = async (
+    selectedFilter = filter,
+    selectedSearch = search,
+    selectedPage = page
+  ) => {
     const params = new URLSearchParams();
+
+    params.append('page', selectedPage);
+    params.append('size', pageSize);
 
     if (selectedFilter === 'completed') {
       params.append('completed', 'true');
@@ -26,26 +38,41 @@ function App() {
       params.append('search', selectedSearch.trim());
     }
 
-    const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
-
-    const response = await fetch(url);
+    const response = await fetch(`${PAGE_API_URL}?${params.toString()}`);
     const data = await response.json();
-    setTasks(data);
+
+    setTasks(data.content);
+    setPage(data.page);
+    setTotalPages(data.totalPages);
+    setLast(data.last);
   };
 
   const changeFilter = (selectedFilter) => {
     setFilter(selectedFilter);
-    loadTasks(selectedFilter, search);
+    setPage(0);
+    loadTasks(selectedFilter, search, 0);
   };
 
   const searchTasks = (e) => {
     e.preventDefault();
-    loadTasks(filter, search);
+    setPage(0);
+    loadTasks(filter, search, 0);
   };
 
   const clearSearch = () => {
     setSearch('');
-    loadTasks(filter, '');
+    setPage(0);
+    loadTasks(filter, '', 0);
+  };
+
+  const previousPage = () => {
+    if (page === 0) return;
+    loadTasks(filter, search, page - 1);
+  };
+
+  const nextPage = () => {
+    if (last) return;
+    loadTasks(filter, search, page + 1);
   };
 
   const createTask = async (e) => {
@@ -179,6 +206,19 @@ function App() {
           </li>
         ))}
       </ul>
+      <div className="pagination">
+        <button onClick={previousPage} disabled={page === 0}>
+          Previous
+        </button>
+
+        <span>
+          Page {page + 1} of {totalPages || 1}
+        </span>
+
+        <button onClick={nextPage} disabled={last}>
+          Next
+        </button>
+      </div>
     </main>
   );
 }
