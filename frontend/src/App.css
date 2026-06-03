@@ -81,3 +81,14 @@ li span {
 .filters button:hover {
   background: #d1d5db;
 }
+
+.search-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.search-form button {
+  background: #4b5563;
+  color: white;
+}

@@ -9,17 +9,24 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
 
-  const loadTasks = async (selectedFilter = filter) => {
-    let url = API_URL;
+  const loadTasks = async (selectedFilter = filter, selectedSearch = search) => {
+    const params = new URLSearchParams();
 
     if (selectedFilter === 'completed') {
-      url += '?completed=true';
+      params.append('completed', 'true');
     }
 
     if (selectedFilter === 'pending') {
-      url += '?completed=false';
+      params.append('completed', 'false');
     }
+
+    if (selectedSearch.trim()) {
+      params.append('search', selectedSearch.trim());
+    }
+
+    const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
 
     const response = await fetch(url);
     const data = await response.json();
@@ -28,7 +35,17 @@ function App() {
 
   const changeFilter = (selectedFilter) => {
     setFilter(selectedFilter);
-    loadTasks(selectedFilter);
+    loadTasks(selectedFilter, search);
+  };
+
+  const searchTasks = (e) => {
+    e.preventDefault();
+    loadTasks(filter, search);
+  };
+
+  const clearSearch = () => {
+    setSearch('');
+    loadTasks(filter, '');
   };
 
   const createTask = async (e) => {
@@ -114,6 +131,16 @@ function App() {
           placeholder="New task title"
         />
         <button type="submit">Add</button>
+      </form>
+
+      <form className="search-form" onSubmit={searchTasks}>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search task..."
+        />
+        <button type="submit">Search</button>
+        <button type="button" onClick={clearSearch}>Clear</button>
       </form>
 
       <div className="filters">
