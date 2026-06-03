@@ -19,9 +19,9 @@ public class TaskController {
 
     @GetMapping
     public ResponseEntity<List<TaskResponse>> findAll(
-            @RequestParam(required = false) Boolean completed
-    ) {
-        return ResponseEntity.ok(taskService.findAll(completed));
+            @RequestParam(required = false) Boolean completed,
+            @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(taskService.findAll(completed, search));
     }
 
     @GetMapping("/{id}")
@@ -43,8 +43,7 @@ public class TaskController {
     @PutMapping("/{id}")
     public ResponseEntity<TaskResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody TaskRequest request
-    ) {
+            @Valid @RequestBody TaskRequest request) {
         return ResponseEntity.ok(taskService.update(id, request));
     }
 

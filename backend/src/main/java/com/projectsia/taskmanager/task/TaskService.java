@@ -13,10 +13,20 @@ public class TaskService {
         this.taskRepository = taskRepository;
     }
 
-    public List<TaskResponse> findAll(Boolean completed) {
-        List<Task> tasks = completed == null
-                ? taskRepository.findAll()
-                : taskRepository.findByCompleted(completed);
+    public List<TaskResponse> findAll(Boolean completed, String search) {
+        boolean hasSearch = search != null && !search.isBlank();
+
+        List<Task> tasks;
+
+        if (completed != null && hasSearch) {
+            tasks = taskRepository.findByCompletedAndTitleContainingIgnoreCase(completed, search);
+        } else if (completed != null) {
+            tasks = taskRepository.findByCompleted(completed);
+        } else if (hasSearch) {
+            tasks = taskRepository.findByTitleContainingIgnoreCase(search);
+        } else {
+            tasks = taskRepository.findAll();
+        }
 
         return tasks.stream()
                 .map(this::toResponse)
@@ -64,8 +74,7 @@ public class TaskService {
                 task.getDescription(),
                 task.isCompleted(),
                 task.getCreatedAt(),
-                task.getUpdatedAt()
-        );
+                task.getUpdatedAt());
     }
 
 }
