@@ -1,6 +1,7 @@
 package com.projectsia.taskmanager.task;
 
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -16,16 +17,18 @@ public class TaskService {
     public List<TaskResponse> findAll(Boolean completed, String search) {
         boolean hasSearch = search != null && !search.isBlank();
 
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+
         List<Task> tasks;
 
         if (completed != null && hasSearch) {
-            tasks = taskRepository.findByCompletedAndTitleContainingIgnoreCase(completed, search);
+            tasks = taskRepository.findByCompletedAndTitleContainingIgnoreCase(completed, search, sort);
         } else if (completed != null) {
-            tasks = taskRepository.findByCompleted(completed);
+            tasks = taskRepository.findByCompleted(completed, sort);
         } else if (hasSearch) {
-            tasks = taskRepository.findByTitleContainingIgnoreCase(search);
+            tasks = taskRepository.findByTitleContainingIgnoreCase(search, sort);
         } else {
-            tasks = taskRepository.findAll();
+            tasks = taskRepository.findAll(sort);
         }
 
         return tasks.stream()
