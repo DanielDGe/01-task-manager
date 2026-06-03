@@ -2,6 +2,10 @@ package com.projectsia.taskmanager.task;
 
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Sort;
+import com.projectsia.taskmanager.common.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -78,6 +82,32 @@ public class TaskService {
                 task.isCompleted(),
                 task.getCreatedAt(),
                 task.getUpdatedAt());
+    }
+
+    public PageResponse<TaskResponse> findPage(Boolean completed, String search, int page, int size) {
+        boolean hasSearch = search != null && !search.isBlank();
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Task> taskPage;
+
+        if (completed != null && hasSearch) {
+            taskPage = taskRepository.findByCompletedAndTitleContainingIgnoreCase(completed, search, pageable);
+        } else if (completed != null) {
+            taskPage = taskRepository.findByCompleted(completed, pageable);
+        } else if (hasSearch) {
+            taskPage = taskRepository.findByTitleContainingIgnoreCase(search, pageable);
+        } else {
+            taskPage = taskRepository.findAll(pageable);
+        }
+
+        return new PageResponse<>(
+                taskPage.getContent().stream().map(this::toResponse).toList(),
+                taskPage.getNumber(),
+                taskPage.getSize(),
+                taskPage.getTotalElements(),
+                taskPage.getTotalPages(),
+                taskPage.isLast());
     }
 
 }

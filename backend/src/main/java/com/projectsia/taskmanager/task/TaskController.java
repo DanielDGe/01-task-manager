@@ -3,6 +3,7 @@ package com.projectsia.taskmanager.task;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.projectsia.taskmanager.common.PageResponse;
 
 import java.net.URI;
 import java.util.List;
@@ -52,4 +53,14 @@ public class TaskController {
         taskService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/page")
+    public ResponseEntity<PageResponse<TaskResponse>> findPage(
+            @RequestParam(required = false) Boolean completed,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        return ResponseEntity.ok(taskService.findPage(completed, search, page, size));
+    }
+    
 }
