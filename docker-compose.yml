@@ -4,9 +4,9 @@ services:
     container_name: task-manager-db
     restart: always
     environment:
-      POSTGRES_DB: task_manager
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -25,11 +25,11 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/task_manager
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "8080:8080"
+      - "${BACKEND_PORT}:8080"
   
   frontend:
     build: ./frontend
@@ -38,9 +38,9 @@ services:
     depends_on:
       - backend
     environment:
-      VITE_API_URL: http://localhost:8080/api/tasks
+      VITE_API_URL: ${VITE_API_URL}
     ports:
-      - "5173:5173"
+      - "${FRONTEND_PORT}:5173"
 
 volumes:
   task_manager_data:
