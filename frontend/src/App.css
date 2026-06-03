@@ -66,3 +66,18 @@ li {
 li span {
   flex: 1;
 }
+
+.filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.filters button {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.filters button:hover {
+  background: #d1d5db;
+}

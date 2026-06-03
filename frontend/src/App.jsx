@@ -8,11 +8,27 @@ function App() {
   const [title, setTitle] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const [filter, setFilter] = useState('all');
 
-  const loadTasks = async () => {
-    const response = await fetch(API_URL);
+  const loadTasks = async (selectedFilter = filter) => {
+    let url = API_URL;
+
+    if (selectedFilter === 'completed') {
+      url += '?completed=true';
+    }
+
+    if (selectedFilter === 'pending') {
+      url += '?completed=false';
+    }
+
+    const response = await fetch(url);
     const data = await response.json();
     setTasks(data);
+  };
+
+  const changeFilter = (selectedFilter) => {
+    setFilter(selectedFilter);
+    loadTasks(selectedFilter);
   };
 
   const createTask = async (e) => {
@@ -99,6 +115,12 @@ function App() {
         />
         <button type="submit">Add</button>
       </form>
+
+      <div className="filters">
+        <button onClick={() => changeFilter('all')}>All</button>
+        <button onClick={() => changeFilter('pending')}>Pending</button>
+        <button onClick={() => changeFilter('completed')}>Completed</button>
+      </div>
 
       <ul>
         {tasks.map((task) => (
