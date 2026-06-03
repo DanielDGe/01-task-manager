@@ -13,9 +13,12 @@ public class TaskService {
         this.taskRepository = taskRepository;
     }
 
-    public List<TaskResponse> findAll() {
-        return taskRepository.findAll()
-                .stream()
+    public List<TaskResponse> findAll(Boolean completed) {
+        List<Task> tasks = completed == null
+                ? taskRepository.findAll()
+                : taskRepository.findByCompleted(completed);
+
+        return tasks.stream()
                 .map(this::toResponse)
                 .toList();
     }

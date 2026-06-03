@@ -18,8 +18,10 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TaskResponse>> findAll() {
-        return ResponseEntity.ok(taskService.findAll());
+    public ResponseEntity<List<TaskResponse>> findAll(
+            @RequestParam(required = false) Boolean completed
+    ) {
+        return ResponseEntity.ok(taskService.findAll(completed));
     }
 
     @GetMapping("/{id}")
