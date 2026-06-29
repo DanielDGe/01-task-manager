@@ -17,6 +17,7 @@ function App() {
   const pageSize = 2;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [titleError, setTitleError] = useState('');
 
   const loadTasks = async (
     selectedFilter = filter,
@@ -94,7 +95,12 @@ function App() {
   const createTask = async (e) => {
     e.preventDefault();
 
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      setTitleError('Task title is required');
+      return;
+    }
+
+    setTitleError('');
 
     await fetch(API_URL, {
       method: 'POST',
@@ -107,7 +113,7 @@ function App() {
     });
 
     setTitle('');
-    loadTasks();
+    loadTasks(filter, search, 0);
   };
 
   const toggleTask = async (task) => {
@@ -152,11 +158,15 @@ function App() {
   };
 
   const deleteTask = async (id) => {
+    const confirmed = window.confirm('Are you sure you want to delete this task?');
+
+    if (!confirmed) return;
+
     await fetch(`${API_URL}/${id}`, {
       method: 'DELETE'
     });
 
-    loadTasks();
+    loadTasks(filter, search, page);
   };
 
   useEffect(() => {
@@ -176,6 +186,8 @@ function App() {
         <button type="submit">Add</button>
       </form>
 
+      {titleError && <p className="error">{titleError}</p>}
+
       <form className="search-form" onSubmit={searchTasks}>
         <input
           value={search}
@@ -187,15 +199,32 @@ function App() {
       </form>
 
       <div className="filters">
-        <button onClick={() => changeFilter('all')}>All</button>
-        <button onClick={() => changeFilter('pending')}>Pending</button>
-        <button onClick={() => changeFilter('completed')}>Completed</button>
+        <button
+          className={filter === 'all' ? 'active' : ''}
+          onClick={() => changeFilter('all')}
+        >
+          All
+        </button>
+
+        <button
+          className={filter === 'pending' ? 'active' : ''}
+          onClick={() => changeFilter('pending')}
+        >
+          Pending
+        </button>
+
+        <button
+          className={filter === 'completed' ? 'active' : ''}
+          onClick={() => changeFilter('completed')}
+        >
+          Completed
+        </button>
       </div>
 
       {loading && <p className="loading">Loading tasks...</p>}
 
       {error && <p className="error">{error}</p>}
-      
+
       <ul>
         {tasks.map((task) => (
           <li key={task.id}>
@@ -215,17 +244,25 @@ function App() {
                 <button onClick={cancelEditing}>Cancel</button>
               </>
             ) : (
-              <>
-                <span style={{ textDecoration: task.completed ? 'line-through' : 'none' }}>
+              <div className="task-info">
+                <span className={task.completed ? 'task-title completed' : 'task-title'}>
                   {task.title}
                 </span>
-                <button onClick={() => startEditing(task)}>Edit</button>
-                <button onClick={() => deleteTask(task.id)}>Delete</button>
-              </>
+
+                <small>
+                  Created: {new Date(task.createdAt).toLocaleString()}
+                </small>
+              </div>
             )}
           </li>
         ))}
+
+        {!loading && !error && tasks.length === 0 && (
+          <p className="empty">No tasks found.</p>
+        )}
+
       </ul>
+
       <div className="pagination">
         <button onClick={previousPage} disabled={page === 0}>
           Previous

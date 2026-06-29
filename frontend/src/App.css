@@ -128,3 +128,61 @@ li span {
   font-size: 14px;
   font-weight: bold;
 }
+
+.filters button.active {
+  background: #2563eb;
+  color: white;
+}
+
+.empty {
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 16px;
+}
+
+.task-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-title.completed {
+  text-decoration: line-through;
+}
+
+.task-info small {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+li small {
+  font-size: 11px;
+  color: #6b7280;
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  main {
+    margin: 20px;
+    padding: 24px;
+  }
+
+  h1 {
+    font-size: 36px;
+  }
+
+  form,
+  .search-form {
+    flex-direction: column;
+  }
+
+  li {
+    flex-wrap: wrap;
+  }
+
+  li button {
+    margin-top: 6px;
+  }
+}
