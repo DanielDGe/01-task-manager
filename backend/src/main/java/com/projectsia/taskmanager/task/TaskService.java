@@ -1,26 +1,34 @@
 package com.projectsia.taskmanager.task;
 
-import org.springframework.stereotype.Service;
-import org.springframework.data.domain.Sort;
+import com.projectsia.taskmanager.common.InvalidPaginationException;
 import com.projectsia.taskmanager.common.PageResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
+@Transactional(readOnly = true)
 public class TaskService {
 
-    private final TaskRepository taskRepository;
+    private static final int MAX_PAGE_SIZE = 100;
 
-    public TaskService(TaskRepository taskRepository) {
+    private final TaskRepository taskRepository;
+    private final TaskMapper taskMapper;
+
+    public TaskService(TaskRepository taskRepository, TaskMapper taskMapper) {
         this.taskRepository = taskRepository;
+        this.taskMapper = taskMapper;
     }
 
     public List<TaskResponse> findAll(Boolean completed, String search) {
-        boolean hasSearch = search != null && !search.isBlank();
-
+        boolean hasSearch = hasSearch(search);
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
 
         List<Task> tasks;
@@ -36,63 +44,31 @@ public class TaskService {
         }
 
         return tasks.stream()
-                .map(this::toResponse)
+                .map(taskMapper::toResponse)
                 .toList();
     }
 
-    public TaskResponse findById(Long id) {
-        Task task = findEntityById(id);
-        return toResponse(task);
-    }
+    public PageResponse<TaskResponse> findPage(
+            Boolean completed,
+            String search,
+            int page,
+            int size
+    ) {
+        validatePagination(page, size);
 
-    public TaskResponse create(TaskRequest request) {
-        Task task = new Task();
-        task.setTitle(request.title());
-        task.setDescription(request.description());
-        task.setCompleted(request.completed());
+        boolean hasSearch = hasSearch(search);
 
-        return toResponse(taskRepository.save(task));
-    }
-
-    public TaskResponse update(Long id, TaskRequest request) {
-        Task existingTask = findEntityById(id);
-
-        existingTask.setTitle(request.title());
-        existingTask.setDescription(request.description());
-        existingTask.setCompleted(request.completed());
-
-        return toResponse(taskRepository.save(existingTask));
-    }
-
-    public void delete(Long id) {
-        Task existingTask = findEntityById(id);
-        taskRepository.delete(existingTask);
-    }
-
-    private Task findEntityById(Long id) {
-        return taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFoundException(id));
-    }
-
-    private TaskResponse toResponse(Task task) {
-        return new TaskResponse(
-                task.getId(),
-                task.getTitle(),
-                task.getDescription(),
-                task.isCompleted(),
-                task.getCreatedAt(),
-                task.getUpdatedAt());
-    }
-
-    public PageResponse<TaskResponse> findPage(Boolean completed, String search, int page, int size) {
-        boolean hasSearch = search != null && !search.isBlank();
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
 
         Page<Task> taskPage;
 
         if (completed != null && hasSearch) {
-            taskPage = taskRepository.findByCompletedAndTitleContainingIgnoreCase(completed, search, pageable);
+            taskPage = taskRepository
+                    .findByCompletedAndTitleContainingIgnoreCase(completed, search, pageable);
         } else if (completed != null) {
             taskPage = taskRepository.findByCompleted(completed, pageable);
         } else if (hasSearch) {
@@ -102,12 +78,76 @@ public class TaskService {
         }
 
         return new PageResponse<>(
-                taskPage.getContent().stream().map(this::toResponse).toList(),
+                taskPage.getContent().stream()
+                        .map(taskMapper::toResponse)
+                        .toList(),
                 taskPage.getNumber(),
                 taskPage.getSize(),
                 taskPage.getTotalElements(),
                 taskPage.getTotalPages(),
-                taskPage.isLast());
+                taskPage.isLast()
+        );
     }
 
+    public TaskResponse findById(Long id) {
+        return taskMapper.toResponse(findEntityById(id));
+    }
+
+    @Transactional
+    public TaskResponse create(TaskRequest request) {
+        Task savedTask = taskRepository.save(taskMapper.toEntity(request));
+
+        log.info("Task created: id={}, title={}",
+                savedTask.getId(),
+                savedTask.getTitle());
+
+        return taskMapper.toResponse(savedTask);
+    }
+
+    @Transactional
+    public TaskResponse update(Long id, TaskRequest request) {
+        Task existingTask = findEntityById(id);
+
+        taskMapper.updateEntity(existingTask, request);
+
+        Task savedTask = taskRepository.save(existingTask);
+
+        log.info("Task updated: id={}, completed={}",
+                savedTask.getId(),
+                savedTask.isCompleted());
+
+        return taskMapper.toResponse(savedTask);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Task existingTask = findEntityById(id);
+
+        taskRepository.delete(existingTask);
+
+        log.info("Task deleted: id={}", id);
+    }
+
+    private Task findEntityById(Long id) {
+        return taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException(id));
+    }
+
+    private boolean hasSearch(String search) {
+        return search != null && !search.isBlank();
+    }
+
+    private void validatePagination(int page, int size) {
+        if (page < 0) {
+            throw new InvalidPaginationException(
+                    "Page must be greater than or equal to 0"
+            );
+        }
+
+        if (size < 1 || size > MAX_PAGE_SIZE) {
+            throw new InvalidPaginationException(
+                    "Size must be between 1 and " + MAX_PAGE_SIZE
+            );
+        }
+    }
 }

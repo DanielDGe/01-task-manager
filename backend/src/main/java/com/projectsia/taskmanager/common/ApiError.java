@@ -7,6 +7,7 @@ public record ApiError(
         LocalDateTime timestamp,
         int status,
         String error,
+        String code,
         List<String> messages,
         String path
 ) {
