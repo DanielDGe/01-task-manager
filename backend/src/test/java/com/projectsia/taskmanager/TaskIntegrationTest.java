@@ -17,6 +17,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -42,6 +44,7 @@ class TaskIntegrationTest {
     @Test
     void shouldCreateAndRetrieveTaskUsingPostgres() throws Exception {
         mockMvc.perform(post("/api/tasks")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -55,6 +58,7 @@ class TaskIntegrationTest {
                 .andExpect(jsonPath("$.createdAt").exists());
 
         mockMvc.perform(get("/api/tasks/page")
+                        .with(jwt())
                         .param("page", "0")
                         .param("size", "5"))
                 .andExpect(status().isOk())

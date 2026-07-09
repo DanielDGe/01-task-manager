@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import './App.css';
+import { apiFetch } from './api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/tasks';
 const PAGE_API_URL = `${API_URL}/page`;
 
-function App() {
+function App({ keycloak }) {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState('');
   const [editingId, setEditingId] = useState(null);
@@ -45,7 +46,7 @@ function App() {
         params.append('search', selectedSearch.trim());
       }
 
-      const response = await fetch(`${PAGE_API_URL}?${params.toString()}`);
+      const response = await apiFetch(`${PAGE_API_URL}?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error('Error loading tasks');
@@ -102,7 +103,7 @@ function App() {
 
     setTitleError('');
 
-    await fetch(API_URL, {
+    await apiFetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -117,7 +118,7 @@ function App() {
   };
 
   const toggleTask = async (task) => {
-    await fetch(`${API_URL}/${task.id}`, {
+    await apiFetch(`${API_URL}/${task.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -143,7 +144,7 @@ function App() {
   const saveEditing = async (task) => {
     if (!editingTitle.trim()) return;
 
-    await fetch(`${API_URL}/${task.id}`, {
+    await apiFetch(`${API_URL}/${task.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -162,7 +163,7 @@ function App() {
 
     if (!confirmed) return;
 
-    await fetch(`${API_URL}/${id}`, {
+    await apiFetch(`${API_URL}/${id}`, {
       method: 'DELETE'
     });
 
@@ -176,6 +177,20 @@ function App() {
   return (
     <main>
       <h1>Task Manager</h1>
+
+      <div className="session-bar">
+        <span>
+          Signed in as: {keycloak.tokenParsed?.preferred_username}
+        </span>
+
+        <button
+          type="button"
+          className="logout-button"
+          onClick={() => keycloak.logout({ redirectUri: window.location.origin })}
+        >
+          Logout
+        </button>
+      </div>
 
       <form onSubmit={createTask}>
         <input

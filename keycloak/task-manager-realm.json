@@ -1,0 +1,52 @@
+{
+  "realm": "task-manager",
+  "enabled": true,
+  "displayName": "Task Manager",
+
+  "roles": {
+    "realm": [
+      {
+        "name": "user",
+        "description": "Standard Task Manager user"
+      }
+    ]
+  },
+
+  "clients": [
+    {
+      "clientId": "task-manager-web",
+      "name": "Task Manager React Frontend",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173"
+      ]
+    }
+  ],
+
+  "users": [
+    {
+      "username": "daniel",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Daniel",
+      "lastName": "Garcia",
+      "realmRoles": [
+        "user"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "TaskManager123!",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

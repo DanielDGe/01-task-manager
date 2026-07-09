@@ -186,3 +186,17 @@ li small {
     margin-top: 6px;
   }
 }
+
+.session-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.logout-button {
+  background: #475569;
+  color: white;
+}

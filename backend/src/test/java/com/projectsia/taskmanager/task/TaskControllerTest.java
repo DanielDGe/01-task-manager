@@ -19,6 +19,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+
 
 @WebMvcTest(TaskController.class)
 @Import(GlobalExceptionHandler.class)
@@ -44,6 +46,7 @@ class TaskControllerTest {
         given(taskService.create(any(TaskRequest.class))).willReturn(response);
 
         mockMvc.perform(post("/api/tasks")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -63,6 +66,7 @@ class TaskControllerTest {
     @Test
     void shouldReturn400WhenTitleIsBlank() throws Exception {
         mockMvc.perform(post("/api/tasks")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -82,7 +86,9 @@ class TaskControllerTest {
         given(taskService.findById(999L))
                 .willThrow(new TaskNotFoundException(999L));
 
-        mockMvc.perform(get("/api/tasks/999"))
+        mockMvc.perform(get("/api/tasks/999")
+                        .with(jwt())
+                )
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("TASK_NOT_FOUND"))
                 .andExpect(jsonPath("$.messages[0]")
