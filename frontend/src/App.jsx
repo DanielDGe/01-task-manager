@@ -255,20 +255,37 @@ function App({ keycloak }) {
                   value={editingTitle}
                   onChange={(e) => setEditingTitle(e.target.value)}
                 />
-                <button onClick={() => saveEditing(task)}>Save</button>
-                <button onClick={cancelEditing}>Cancel</button>
+
+                <button type="button" onClick={() => saveEditing(task)}>
+                  Save
+                </button>
+
+                <button type="button" onClick={cancelEditing}>
+                  Cancel
+                </button>
               </>
             ) : (
-              <div className="task-info">
-                <span className={task.completed ? 'task-title completed' : 'task-title'}>
-                  {task.title}
-                </span>
+              <>
+                <div className="task-info">
+                  <span className={task.completed ? 'task-title completed' : 'task-title'}>
+                    {task.title}
+                  </span>
 
-                <small>
-                  Created: {new Date(task.createdAt).toLocaleString()}
-                </small>
-              </div>
+                  <small>
+                    Created: {new Date(task.createdAt).toLocaleString()}
+                  </small>
+                </div>
+
+                <button type="button" onClick={() => startEditing(task)}>
+                  Edit
+                </button>
+
+                <button type="button" onClick={() => deleteTask(task.id)}>
+                  Delete
+                </button>
+              </>
             )}
+
           </li>
         ))}
 

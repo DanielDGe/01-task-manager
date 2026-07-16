@@ -24,6 +24,9 @@ public class Task {
 
     private boolean completed = false;
 
+    @Column(name = "owner_username", nullable = false, length = 100)
+    private String ownerUsername;
+    
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

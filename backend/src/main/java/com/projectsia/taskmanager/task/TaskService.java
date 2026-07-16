@@ -1,5 +1,6 @@
 package com.projectsia.taskmanager.task;
 
+import com.projectsia.taskmanager.common.CurrentUserService;
 import com.projectsia.taskmanager.common.InvalidPaginationException;
 import com.projectsia.taskmanager.common.PageResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -7,43 +8,46 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Slf4j
-@Service
 @Transactional(readOnly = true)
+@Service
 public class TaskService {
 
     private static final int MAX_PAGE_SIZE = 100;
 
     private final TaskRepository taskRepository;
     private final TaskMapper taskMapper;
+    private final CurrentUserService currentUserService;
 
-    public TaskService(TaskRepository taskRepository, TaskMapper taskMapper) {
+    public TaskService(
+            TaskRepository taskRepository,
+            TaskMapper taskMapper,
+            CurrentUserService currentUserService
+    ) {
         this.taskRepository = taskRepository;
         this.taskMapper = taskMapper;
+        this.currentUserService = currentUserService;
     }
 
     public List<TaskResponse> findAll(Boolean completed, String search) {
-        boolean hasSearch = hasSearch(search);
+        String ownerUsername = currentUserService.getUsername();
+
+        Specification<Task> specification = buildSpecification(
+                ownerUsername,
+                completed,
+                search
+        );
+
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
 
-        List<Task> tasks;
-
-        if (completed != null && hasSearch) {
-            tasks = taskRepository.findByCompletedAndTitleContainingIgnoreCase(completed, search, sort);
-        } else if (completed != null) {
-            tasks = taskRepository.findByCompleted(completed, sort);
-        } else if (hasSearch) {
-            tasks = taskRepository.findByTitleContainingIgnoreCase(search, sort);
-        } else {
-            tasks = taskRepository.findAll(sort);
-        }
-
-        return tasks.stream()
+        return taskRepository.findAll(specification, sort)
+                .stream()
                 .map(taskMapper::toResponse)
                 .toList();
     }
@@ -56,7 +60,13 @@ public class TaskService {
     ) {
         validatePagination(page, size);
 
-        boolean hasSearch = hasSearch(search);
+        String ownerUsername = currentUserService.getUsername();
+
+        Specification<Task> specification = buildSpecification(
+                ownerUsername,
+                completed,
+                search
+        );
 
         Pageable pageable = PageRequest.of(
                 page,
@@ -64,18 +74,7 @@ public class TaskService {
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        Page<Task> taskPage;
-
-        if (completed != null && hasSearch) {
-            taskPage = taskRepository
-                    .findByCompletedAndTitleContainingIgnoreCase(completed, search, pageable);
-        } else if (completed != null) {
-            taskPage = taskRepository.findByCompleted(completed, pageable);
-        } else if (hasSearch) {
-            taskPage = taskRepository.findByTitleContainingIgnoreCase(search, pageable);
-        } else {
-            taskPage = taskRepository.findAll(pageable);
-        }
+        Page<Task> taskPage = taskRepository.findAll(specification, pageable);
 
         return new PageResponse<>(
                 taskPage.getContent().stream()
@@ -95,10 +94,16 @@ public class TaskService {
 
     @Transactional
     public TaskResponse create(TaskRequest request) {
-        Task savedTask = taskRepository.save(taskMapper.toEntity(request));
+        String ownerUsername = currentUserService.getUsername();
 
-        log.info("Task created: id={}, title={}",
+        Task task = taskMapper.toEntity(request);
+        task.setOwnerUsername(ownerUsername);
+
+        Task savedTask = taskRepository.save(task);
+
+        log.info("Task created: id={}, owner={}, title={}",
                 savedTask.getId(),
+                ownerUsername,
                 savedTask.getTitle());
 
         return taskMapper.toResponse(savedTask);
@@ -112,8 +117,9 @@ public class TaskService {
 
         Task savedTask = taskRepository.save(existingTask);
 
-        log.info("Task updated: id={}, completed={}",
+        log.info("Task updated: id={}, owner={}, completed={}",
                 savedTask.getId(),
+                savedTask.getOwnerUsername(),
                 savedTask.isCompleted());
 
         return taskMapper.toResponse(savedTask);
@@ -125,16 +131,26 @@ public class TaskService {
 
         taskRepository.delete(existingTask);
 
-        log.info("Task deleted: id={}", id);
+        log.info("Task deleted: id={}, owner={}",
+                id,
+                existingTask.getOwnerUsername());
     }
 
     private Task findEntityById(Long id) {
-        return taskRepository.findById(id)
+        String ownerUsername = currentUserService.getUsername();
+
+        return taskRepository.findByIdAndOwnerUsername(id, ownerUsername)
                 .orElseThrow(() -> new TaskNotFoundException(id));
     }
 
-    private boolean hasSearch(String search) {
-        return search != null && !search.isBlank();
+    private Specification<Task> buildSpecification(
+            String ownerUsername,
+            Boolean completed,
+            String search
+    ) {
+        return TaskSpecifications.belongsTo(ownerUsername)
+                .and(TaskSpecifications.completedEquals(completed))
+                .and(TaskSpecifications.titleContains(search));
     }
 
     private void validatePagination(int page, int size) {

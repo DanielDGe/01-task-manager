@@ -7,6 +7,7 @@ public record TaskResponse(
         String title,
         String description,
         boolean completed,
+        String ownerUsername,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

@@ -1,6 +1,8 @@
 package com.projectsia.taskmanager.task;
 
 import com.projectsia.taskmanager.common.InvalidPaginationException;
+import com.projectsia.taskmanager.common.CurrentUserService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,9 +27,15 @@ class TaskServiceTest {
 
     private TaskService taskService;
 
+    @Mock
+    private CurrentUserService currentUserService;
+
     @BeforeEach
     void setUp() {
-        taskService = new TaskService(taskRepository, new TaskMapper());
+        taskService = new TaskService(
+                taskRepository,
+                new TaskMapper(),
+                currentUserService);
     }
 
     @Test
@@ -35,8 +43,9 @@ class TaskServiceTest {
         TaskRequest request = new TaskRequest(
                 "Write automated tests",
                 "Test TaskService with Mockito",
-                false
-        );
+                false);
+
+        when(currentUserService.getUsername()).thenReturn("daniel");
 
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task task = invocation.getArgument(0);
@@ -50,6 +59,7 @@ class TaskServiceTest {
 
         ArgumentCaptor<Task> taskCaptor = ArgumentCaptor.forClass(Task.class);
         verify(taskRepository).save(taskCaptor.capture());
+        assertThat(taskCaptor.getValue().getOwnerUsername()).isEqualTo("daniel");
 
         assertThat(taskCaptor.getValue().getTitle()).isEqualTo("Write automated tests");
         assertThat(response.id()).isEqualTo(10L);
@@ -59,11 +69,15 @@ class TaskServiceTest {
 
     @Test
     void shouldThrowWhenTaskDoesNotExist() {
-        when(taskRepository.findById(999L)).thenReturn(Optional.empty());
+        
+        when(currentUserService.getUsername()).thenReturn("daniel");
+        when(taskRepository.findByIdAndOwnerUsername(999L, "daniel"))
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> taskService.findById(999L))
                 .isInstanceOf(TaskNotFoundException.class)
                 .hasMessage("Task not found with id: 999");
+
     }
 
     @Test

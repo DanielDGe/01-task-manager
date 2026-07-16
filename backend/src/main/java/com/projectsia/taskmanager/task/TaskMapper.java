@@ -23,6 +23,7 @@ public class TaskMapper {
                 task.getTitle(),
                 task.getDescription(),
                 task.isCompleted(),
+                task.getOwnerUsername(),
                 task.getCreatedAt(),
                 task.getUpdatedAt()
         );
